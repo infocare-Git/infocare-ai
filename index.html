@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automation Chain — Claude × GitHub × Slack × Gmail</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">⚙</span>
+        <div>
+          <h1>Automation Chain</h1>
+          <p class="tagline">Build the automation. Watch the tools talk to each other.</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Level</span>
+          <span class="stat-value" id="level-indicator">1 / 4</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" id="score-indicator">0</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="board">
+      <section class="scenario-card">
+        <h2 id="scenario-title">Loading…</h2>
+        <p class="scenario-line"><strong>Trigger:</strong> <span id="scenario-trigger"></span></p>
+        <p class="scenario-line"><strong>Goal:</strong> <span id="scenario-goal"></span></p>
+      </section>
+
+      <section class="pipeline-wrap">
+        <svg id="pipeline-svg" class="pipeline-svg"></svg>
+        <div id="slots" class="slots"></div>
+      </section>
+
+      <section class="palette-wrap">
+        <h3>Available Steps <span class="hint">— click a step, then click a slot above</span></h3>
+        <div id="palette" class="palette"></div>
+      </section>
+
+      <div class="actions">
+        <button id="check-btn" class="btn btn-primary">Run Automation ▶</button>
+        <button id="reset-btn" class="btn btn-ghost">Clear</button>
+      </div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+    </main>
+
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <h2 id="modal-title">Automation Complete!</h2>
+        <p id="modal-explanation"></p>
+        <button id="modal-next" class="btn btn-primary">Next Level →</button>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>Every chain here mirrors a real workflow: a <b class="c-github">GitHub</b> or <b class="c-gmail">Gmail</b> event triggers
+      <b class="c-claude">Claude</b> to think, then <b class="c-slack">Slack</b> and <b class="c-gmail">Gmail</b> keep humans in the loop.
+      This is a simulation — no real repos, channels, or inboxes are touched.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
