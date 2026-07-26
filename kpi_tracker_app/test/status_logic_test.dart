@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kpi_tracker/data/seed_data.dart';
-import 'package:kpi_tracker/models/monthly_kpi.dart';
 import 'package:kpi_tracker/models/team_member.dart';
 import 'package:kpi_tracker/models/weekly_entry.dart';
 import 'package:kpi_tracker/utils/status_logic.dart';
