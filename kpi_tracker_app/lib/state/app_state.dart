@@ -272,16 +272,18 @@ class AppState extends ChangeNotifier {
   List<MonthlyKpiDefinition> get monthlyKpiDefinitions =>
       SeedData.monthlyKpiDefinitions();
 
-  List<MonthlyKpiActual> _actualsFor(String kpiId) =>
+  /// All entered actuals for one KPI, oldest first — the sequence a
+  /// trend sparkline or CSV export reads.
+  List<MonthlyKpiActual> actualsHistoryFor(String kpiId) =>
       _monthlyKpiActualsBox.values
           .map((m) => MonthlyKpiActual.fromMap(m))
           .where((a) => a.kpiId == kpiId)
           .toList()
-        ..sort((a, b) => b.enteredAt.compareTo(a.enteredAt));
+        ..sort((a, b) => a.enteredAt.compareTo(b.enteredAt));
 
   MonthlyKpiActual? latestActualFor(String kpiId) {
-    final list = _actualsFor(kpiId);
-    return list.isEmpty ? null : list.first;
+    final list = actualsHistoryFor(kpiId);
+    return list.isEmpty ? null : list.last;
   }
 
   Future<void> setMonthlyActual({

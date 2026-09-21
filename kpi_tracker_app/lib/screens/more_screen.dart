@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'manage_team_screen.dart';
 import 'read_me_screen.dart';
+import 'reports_screen.dart';
 import 'settings_screen.dart';
 import 'team_overview_screen.dart';
 
@@ -35,6 +36,17 @@ class MoreScreen extends StatelessWidget {
             onTap: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const ManageTeamScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.summarize_outlined),
+            title: const Text('Reports'),
+            subtitle: const Text(
+              'Weekly & monthly recaps, share as text, export to CSV',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ReportsScreen())),
           ),
           ListTile(
             leading: const Icon(Icons.settings_outlined),

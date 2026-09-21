@@ -5,6 +5,7 @@ import '../models/team_member.dart';
 import '../state/app_state.dart';
 import '../utils/formatters.dart';
 import '../widgets/section_header.dart';
+import '../widgets/sparkline.dart';
 import '../widgets/status_chip.dart';
 import 'switch_member_sheet.dart';
 
@@ -77,6 +78,27 @@ class WeeklyEntryScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _WeeklyEntryForm(member: member),
           ),
+          if (entries.length >= 2) ...[
+            const SectionHeader(
+              title: 'Bookings trend',
+              subtitle: 'Weekly bookings won, oldest → newest',
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Sparkline(
+                    values: entries.reversed
+                        .map((e) => e.bookingsWon)
+                        .toList(),
+                    color: Colors.blue,
+                    height: 48,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SectionHeader(title: 'Cumulative totals (auto)'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

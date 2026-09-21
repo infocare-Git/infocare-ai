@@ -2,28 +2,30 @@ import 'package:flutter/material.dart';
 
 import '../utils/status_logic.dart';
 
+/// Shared color mapping for [StatusLevel], reused anywhere a status needs
+/// to drive a color (chips, sparklines, pacing bars).
+Color statusColor(StatusLevel level) {
+  switch (level) {
+    case StatusLevel.green:
+      return Colors.green;
+    case StatusLevel.yellow:
+      return Colors.orange;
+    case StatusLevel.red:
+      return Colors.red;
+    case StatusLevel.notEntered:
+      return Colors.grey;
+  }
+}
+
 class StatusChip extends StatelessWidget {
   final StatusLevel level;
   final String label;
 
   const StatusChip({super.key, required this.level, required this.label});
 
-  Color _color(BuildContext context) {
-    switch (level) {
-      case StatusLevel.green:
-        return Colors.green;
-      case StatusLevel.yellow:
-        return Colors.orange;
-      case StatusLevel.red:
-        return Colors.red;
-      case StatusLevel.notEntered:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final color = _color(context);
+    final color = statusColor(level);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

@@ -27,7 +27,8 @@ Settings & Backup → Export/Import to move data between devices or back it up.
 - **Insights → Monthly KPIs** — the 9 KPIs from the "Monthly KPI Dashboard"
   sheet with their formula, target, and red-flag thresholds baked in; enter
   an actual per month and status (on track / watch / red flag) computes
-  automatically.
+  automatically. Each card shows a trend sparkline of every actual entered
+  so far plus a pacing bar comparing the latest actual to its target.
 - **Insights → Activities** — the 10 major activities from the "Activities
   Plan" sheet; update Progress % monthly, status and the team average
   compute automatically.
@@ -38,6 +39,9 @@ Settings & Backup → Export/Import to move data between devices or back it up.
   latest status at a glance.
 - **More → Manage Team** — add, edit, or remove team members and their
   weekly targets.
+- **More → Reports** — auto-generated Weekly Recap (every member's latest
+  status, shareable as text) and Monthly KPI Recap (status counts across
+  all KPIs), each with a one-tap CSV export of the underlying data.
 - **More → Settings & Backup** — export all data to a JSON file (shareable)
   or import a backup, since storage is local-only.
 
@@ -52,8 +56,14 @@ lib/
   utils/      Formatters and the pure status-computation functions that
               mirror the workbook's auto-status formulas
   screens/    One file per screen
-  widgets/    Small shared widgets (status chips, section headers)
+  widgets/    Small shared widgets (status chips, section headers, the
+              hand-rolled Sparkline/PacingBar trend widgets)
 ```
+
+Trend sparklines and pacing bars are drawn with a small `CustomPainter`
+(`lib/widgets/sparkline.dart`) rather than a charting package, so there's
+no extra pub dependency to keep resolvable offline. CSV export
+(`lib/utils/csv_export.dart`) is hand-rolled the same way.
 
 Hive boxes store plain `Map<String, dynamic>` values (no code-generated type
 adapters), so the on-disk format is easy to inspect, export, and migrate.

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../models/monthly_kpi.dart';
 import '../state/app_state.dart';
 import '../utils/status_logic.dart';
+import '../widgets/pacing_bar.dart';
 import '../widgets/section_header.dart';
+import '../widgets/sparkline.dart';
 import '../widgets/status_chip.dart';
 
 class MonthlyDashboardScreen extends StatelessWidget {
@@ -38,6 +40,8 @@ class _KpiCard extends StatelessWidget {
     final appState = context.watch<AppState>();
     final actual = appState.latestActualFor(def.id);
     final status = computeMonthlyKpiStatus(def, actual?.actual);
+    final history = appState.actualsHistoryFor(def.id);
+    final color = statusColor(status);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -75,6 +79,20 @@ class _KpiCard extends StatelessWidget {
                     ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Sparkline(
+                values: history.map((a) => a.actual).toList(),
+                color: color,
+              ),
+              if (actual != null) ...[
+                const SizedBox(height: 8),
+                PacingBar(
+                  actual: actual.actual,
+                  target: def.targetThreshold,
+                  redThreshold: def.redThreshold,
+                  color: color,
+                ),
+              ],
               const SizedBox(height: 12),
               _ActualEntryRow(def: def),
             ],
