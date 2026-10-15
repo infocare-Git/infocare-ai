@@ -7,6 +7,7 @@ import '../utils/formatters.dart';
 import '../widgets/section_header.dart';
 import '../widgets/status_chip.dart';
 import 'switch_member_sheet.dart';
+import 'weekly_entry_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -27,6 +28,11 @@ class HomeScreen extends StatelessWidget {
     final latestStatus = latestEntry == null
         ? null
         : appState.statusFor(latestEntry);
+    final daysSinceLastEntry = latestEntry == null
+        ? null
+        : DateTime.now().difference(latestEntry.enteredAt).inDays;
+    final needsNudge =
+        member != null && (latestEntry == null || daysSinceLastEntry! >= 7);
 
     return Scaffold(
       appBar: AppBar(
@@ -42,8 +48,36 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+      floatingActionButton: member == null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const WeeklyEntryScreen()),
+              ),
+              icon: const Icon(Icons.edit_note),
+              label: const Text('Log this week'),
+            ),
       body: ListView(
         children: [
+          if (needsNudge)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Card(
+                color: Colors.orange.withValues(alpha: 0.12),
+                child: ListTile(
+                  leading: const Icon(Icons.notifications_active_outlined, color: Colors.orange),
+                  title: Text(
+                    latestEntry == null
+                        ? "You haven't logged a week yet"
+                        : "It's been $daysSinceLastEntry days since your last log",
+                  ),
+                  subtitle: const Text('Tap to log this week\'s activity'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const WeeklyEntryScreen()),
+                  ),
+                ),
+              ),
+            ),
           const SectionHeader(
             title: 'FY 2083/84 — Annual Sales Goal',
             subtitle: 'Cumulative bookings across the whole team',

@@ -22,4 +22,8 @@ class Formatters {
   static String multiplier(double value, {int decimals = 1}) {
     return '${value.toStringAsFixed(decimals)}x';
   }
+
+  static final DateFormat _dateFormat = DateFormat('d MMM y');
+
+  static String date(DateTime value) => _dateFormat.format(value);
 }

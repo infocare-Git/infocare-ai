@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../data/carbon_catalog.dart';
 import '../data/hive_boxes.dart';
 import '../data/seed_data.dart';
 import '../models/activity_item.dart';
 import '../models/annual_target.dart';
+import '../models/carbon_entry.dart';
 import '../models/monthly_kpi.dart';
 import '../models/pipeline_deal.dart';
 import '../models/team_member.dart';
@@ -63,6 +65,8 @@ class AppState extends ChangeNotifier {
   late Box<Map> _activityProgressBox;
   late Box<Map> _revenueStreamsBox;
   late Box<Map> _quarterTargetsBox;
+  late Box<Map> _monthlyKpiDefinitionsBox;
+  late Box<Map> _carbonLogEntriesBox;
   late Box _appMetaBox;
 
   bool _ready = false;
@@ -77,6 +81,8 @@ class AppState extends ChangeNotifier {
     _activityProgressBox = Hive.box<Map>(HiveBoxes.activityProgress);
     _revenueStreamsBox = Hive.box<Map>(HiveBoxes.revenueStreams);
     _quarterTargetsBox = Hive.box<Map>(HiveBoxes.quarterTargets);
+    _monthlyKpiDefinitionsBox = Hive.box<Map>(HiveBoxes.monthlyKpiDefinitions);
+    _carbonLogEntriesBox = Hive.box<Map>(HiveBoxes.carbonLogEntries);
     _appMetaBox = Hive.box(HiveBoxes.appMeta);
 
     _seedIfEmpty();
@@ -103,6 +109,11 @@ class AppState extends ChangeNotifier {
     if (_quarterTargetsBox.isEmpty) {
       for (final q in SeedData.defaultQuarterTargets()) {
         _quarterTargetsBox.put(q.id, q.toMap());
+      }
+    }
+    if (_monthlyKpiDefinitionsBox.isEmpty) {
+      for (final d in SeedData.monthlyKpiDefinitions()) {
+        _monthlyKpiDefinitionsBox.put(d.id, d.toMap());
       }
     }
     if (!_appMetaBox.containsKey(_remainingQuarterlyTargetKey)) {
@@ -269,8 +280,33 @@ class AppState extends ChangeNotifier {
 
   // ---------------- Monthly KPI Dashboard ----------------
 
+  /// User-editable — seeded from the workbook's 9 KPIs on first launch,
+  /// but directors can add, edit, or remove their own from here on.
   List<MonthlyKpiDefinition> get monthlyKpiDefinitions =>
-      SeedData.monthlyKpiDefinitions();
+      _monthlyKpiDefinitionsBox.values
+          .map((m) => MonthlyKpiDefinition.fromMap(m))
+          .toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+
+  Future<void> addMonthlyKpiDefinition(MonthlyKpiDefinition def) async {
+    await _monthlyKpiDefinitionsBox.put(def.id, def.toMap());
+    notifyListeners();
+  }
+
+  Future<void> updateMonthlyKpiDefinition(MonthlyKpiDefinition def) async {
+    await _monthlyKpiDefinitionsBox.put(def.id, def.toMap());
+    notifyListeners();
+  }
+
+  Future<void> removeMonthlyKpiDefinition(String id) async {
+    await _monthlyKpiDefinitionsBox.delete(id);
+    for (final a in _monthlyKpiActualsBox.keys.toList()) {
+      if ((a as String).startsWith('${id}__')) {
+        await _monthlyKpiActualsBox.delete(a);
+      }
+    }
+    notifyListeners();
+  }
 
   /// All entered actuals for one KPI, oldest first — the sequence a
   /// trend sparkline or CSV export reads.
@@ -359,6 +395,79 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------------- Carbon Footprint ----------------
+
+  List<CarbonLogEntry> get carbonLogEntries =>
+      _carbonLogEntriesBox.values.map((m) => CarbonLogEntry.fromMap(m)).toList()
+        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+
+  List<CarbonLogEntry> carbonLogsFor(String memberId) =>
+      carbonLogEntries.where((e) => e.memberId == memberId).toList();
+
+  Future<CarbonLogEntry> addCarbonLog({
+    required String memberId,
+    required String activityTypeId,
+    required double quantity,
+  }) async {
+    final entry = CarbonLogEntry(
+      id: _uuid.v4(),
+      memberId: memberId,
+      activityTypeId: activityTypeId,
+      quantity: quantity,
+      loggedAt: DateTime.now(),
+    );
+    await _carbonLogEntriesBox.put(entry.id, entry.toMap());
+    notifyListeners();
+    return entry;
+  }
+
+  Future<void> deleteCarbonLog(String id) async {
+    await _carbonLogEntriesBox.delete(id);
+    notifyListeners();
+  }
+
+  double _co2For(CarbonLogEntry entry) {
+    final type = CarbonCatalog.byId(entry.activityTypeId);
+    return type == null ? 0 : type.co2For(entry.quantity);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  double carbonSavedOn(String memberId, DateTime day) => carbonLogsFor(memberId)
+      .where((e) => _isSameDay(e.loggedAt, day))
+      .fold(0.0, (s, e) => s + _co2For(e));
+
+  double carbonSavedToday(String memberId) =>
+      carbonSavedOn(memberId, DateTime.now());
+
+  double carbonSavedAllTime(String memberId) =>
+      carbonLogsFor(memberId).fold(0.0, (s, e) => s + _co2For(e));
+
+  /// kg CO2e saved today, grouped by activity — the "which activities"
+  /// breakdown, largest contributor first.
+  Map<String, double> carbonBreakdownToday(String memberId) {
+    final totals = <String, double>{};
+    final now = DateTime.now();
+    for (final e in carbonLogsFor(memberId)) {
+      if (!_isSameDay(e.loggedAt, now)) continue;
+      totals[e.activityTypeId] = (totals[e.activityTypeId] ?? 0) + _co2For(e);
+    }
+    final sorted = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return Map.fromEntries(sorted);
+  }
+
+  /// Daily totals for the last [days] days (oldest first) — the sequence
+  /// a trend sparkline reads.
+  List<double> carbonDailyHistory(String memberId, {int days = 14}) {
+    final today = DateTime.now();
+    return List.generate(days, (i) {
+      final day = today.subtract(Duration(days: days - 1 - i));
+      return carbonSavedOn(memberId, day);
+    });
+  }
+
   // ---------------- Backup / restore ----------------
 
   Map<String, dynamic> exportAll() => {
@@ -370,6 +479,8 @@ class AppState extends ChangeNotifier {
     'activityProgress': _activityProgressBox.values.toList(),
     'revenueStreams': _revenueStreamsBox.values.toList(),
     'quarterTargets': _quarterTargetsBox.values.toList(),
+    'monthlyKpiDefinitions': _monthlyKpiDefinitionsBox.values.toList(),
+    'carbonLogEntries': _carbonLogEntriesBox.values.toList(),
     'remainingQuarterlyTarget': remainingQuarterlyTarget,
   };
 
@@ -389,6 +500,14 @@ class AppState extends ChangeNotifier {
     await replace(_activityProgressBox, 'activityProgress', 'id');
     await replace(_revenueStreamsBox, 'revenueStreams', 'id');
     await replace(_quarterTargetsBox, 'quarterTargets', 'id');
+    await replace(_carbonLogEntriesBox, 'carbonLogEntries', 'id');
+
+    // Only overwrite if the backup actually has KPI definitions — an older
+    // backup predating custom KPIs has no such key, and importing it
+    // shouldn't wipe out the receiving device's already-seeded KPIs.
+    if ((data['monthlyKpiDefinitions'] as List?)?.isNotEmpty ?? false) {
+      await replace(_monthlyKpiDefinitionsBox, 'monthlyKpiDefinitions', 'id');
+    }
 
     await _monthlyKpiActualsBox.clear();
     final actuals = (data['monthlyKpiActuals'] as List?) ?? [];

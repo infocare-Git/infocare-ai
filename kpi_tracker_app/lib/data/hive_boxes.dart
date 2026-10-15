@@ -13,6 +13,8 @@ class HiveBoxes {
   static const String activityProgress = 'activity_progress';
   static const String revenueStreams = 'revenue_streams';
   static const String quarterTargets = 'quarter_targets';
+  static const String monthlyKpiDefinitions = 'monthly_kpi_definitions';
+  static const String carbonLogEntries = 'carbon_log_entries';
   static const String appMeta = 'app_meta';
 
   static Future<void> openAll() async {
@@ -24,6 +26,8 @@ class HiveBoxes {
       Hive.openBox<Map>(activityProgress),
       Hive.openBox<Map>(revenueStreams),
       Hive.openBox<Map>(quarterTargets),
+      Hive.openBox<Map>(monthlyKpiDefinitions),
+      Hive.openBox<Map>(carbonLogEntries),
       Hive.openBox(appMeta),
     ]);
   }

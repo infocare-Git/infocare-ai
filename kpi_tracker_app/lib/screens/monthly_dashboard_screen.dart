@@ -8,6 +8,7 @@ import '../widgets/pacing_bar.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sparkline.dart';
 import '../widgets/status_chip.dart';
+import 'kpi_form_sheet.dart';
 
 class MonthlyDashboardScreen extends StatelessWidget {
   const MonthlyDashboardScreen({super.key});
@@ -19,11 +20,28 @@ class MonthlyDashboardScreen extends StatelessWidget {
 
     return ListView(
       children: [
-        const SectionHeader(
+        SectionHeader(
           title: 'Monthly KPI Dashboard',
           subtitle:
               'Enter this month\'s actual — status computes automatically',
+          trailing: TextButton.icon(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const KpiFormSheet(),
+            ),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add KPI'),
+          ),
         ),
+        if (defs.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'No KPIs yet. Tap "Add KPI" to set one up.',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
         ...defs.map((def) => _KpiCard(def: def)),
         const SizedBox(height: 24),
       ],
@@ -60,6 +78,24 @@ class _KpiCard extends StatelessWidget {
                     ),
                   ),
                   StatusChip(level: status, label: _statusLabel(status)),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    onSelected: (choice) {
+                      if (choice == 'edit') {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => KpiFormSheet(existing: def),
+                        );
+                      } else if (choice == 'delete') {
+                        _confirmDelete(context, def);
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -98,6 +134,33 @@ class _KpiCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, MonthlyKpiDefinition def) {
+    final appState = context.read<AppState>();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete this KPI?'),
+        content: Text(
+          'This deletes "${def.name}" and every actual entered for it. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              appState.removeMonthlyKpiDefinition(def.id);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

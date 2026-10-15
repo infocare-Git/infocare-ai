@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'activities_screen.dart';
 import 'annual_targets_screen.dart';
+import 'carbon_screen.dart';
 import 'home_screen.dart';
 import 'monthly_dashboard_screen.dart';
 import 'more_screen.dart';
@@ -23,6 +24,7 @@ class _RootShellState extends State<RootShell> {
     WeeklyEntryScreen(),
     PipelineScreen(),
     _InsightsTabs(),
+    CarbonScreen(),
     MoreScreen(),
   ];
 
@@ -53,6 +55,11 @@ class _RootShellState extends State<RootShell> {
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights),
             label: 'Insights',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.eco_outlined),
+            selectedIcon: Icon(Icons.eco),
+            label: 'Carbon',
           ),
           NavigationDestination(
             icon: Icon(Icons.more_horiz),
